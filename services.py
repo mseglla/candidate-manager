@@ -1,4 +1,3 @@
-import sqlite3
 from db import get_connection
 
 # Candidate Services
@@ -160,7 +159,7 @@ def create_activity(data):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO activities(candidate_id, description, activity_date) VALUES (?, ?, ?)",
+        "INSERT INTO activity_history(candidate_id, description, activity_date) VALUES (?, ?, ?)",
         (data.get("candidate_id"), data.get("description"), data.get("activity_date")),
     )
     conn.commit()
@@ -168,27 +167,30 @@ def create_activity(data):
     conn.close()
     return aid
 
+
 def get_activities():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM activities")
+    cur.execute("SELECT * FROM activity_history")
     rows = [dict(row) for row in cur.fetchall()]
     conn.close()
     return rows
 
+
 def get_activity(aid):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM activities WHERE id = ?", (aid,))
+    cur.execute("SELECT * FROM activity_history WHERE id = ?", (aid,))
     row = cur.fetchone()
     conn.close()
     return dict(row) if row else None
+
 
 def update_activity(aid, data):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "UPDATE activities SET candidate_id = ?, description = ?, activity_date = ? WHERE id = ?",
+        "UPDATE activity_history SET candidate_id = ?, description = ?, activity_date = ? WHERE id = ?",
         (data.get("candidate_id"), data.get("description"), data.get("activity_date"), aid),
     )
     conn.commit()
@@ -196,10 +198,136 @@ def update_activity(aid, data):
     conn.close()
     return updated > 0
 
+
 def delete_activity(aid):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM activities WHERE id = ?", (aid,))
+    cur.execute("DELETE FROM activity_history WHERE id = ?", (aid,))
+    conn.commit()
+    deleted = cur.rowcount
+    conn.close()
+    return deleted > 0
+
+
+# User Services
+
+
+def create_user(data):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO users(username, email) VALUES (?, ?)",
+        (data.get("username"), data.get("email")),
+    )
+    conn.commit()
+    uid = cur.lastrowid
+    conn.close()
+    return uid
+
+
+def get_users():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users")
+    rows = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return rows
+
+
+def get_user(uid):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users WHERE id = ?", (uid,))
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_user(uid, data):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE users SET username = ?, email = ? WHERE id = ?",
+        (data.get("username"), data.get("email"), uid),
+    )
+    conn.commit()
+    updated = cur.rowcount
+    conn.close()
+    return updated > 0
+
+
+def delete_user(uid):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM users WHERE id = ?", (uid,))
+    conn.commit()
+    deleted = cur.rowcount
+    conn.close()
+    return deleted > 0
+
+
+# File Services
+
+
+def create_file(data):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "INSERT INTO files(candidate_id, filename, path, uploaded_at) VALUES (?, ?, ?, ?)",
+        (
+            data.get("candidate_id"),
+            data.get("filename"),
+            data.get("path"),
+            data.get("uploaded_at"),
+        ),
+    )
+    conn.commit()
+    fid = cur.lastrowid
+    conn.close()
+    return fid
+
+
+def get_files():
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM files")
+    rows = [dict(row) for row in cur.fetchall()]
+    conn.close()
+    return rows
+
+
+def get_file(fid):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM files WHERE id = ?", (fid,))
+    row = cur.fetchone()
+    conn.close()
+    return dict(row) if row else None
+
+
+def update_file(fid, data):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE files SET candidate_id = ?, filename = ?, path = ?, uploaded_at = ? WHERE id = ?",
+        (
+            data.get("candidate_id"),
+            data.get("filename"),
+            data.get("path"),
+            data.get("uploaded_at"),
+            fid,
+        ),
+    )
+    conn.commit()
+    updated = cur.rowcount
+    conn.close()
+    return updated > 0
+
+
+def delete_file(fid):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM files WHERE id = ?", (fid,))
     conn.commit()
     deleted = cur.rowcount
     conn.close()
