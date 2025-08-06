@@ -1,0 +1,135 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Candidate Manager API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/candidates": {
+      "get": {
+        "summary": "List candidates",
+        "responses": {
+          "200": {"description": "OK"}
+        }
+      },
+      "post": {
+        "summary": "Create candidate",
+        "responses": {
+          "201": {"description": "Created"}
+        }
+      }
+    },
+    "/candidates/{id}": {
+      "get": {
+        "summary": "Get candidate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "OK"},
+          "404": {"description": "Not found"}
+        }
+      },
+      "put": {
+        "summary": "Update candidate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Updated"},
+          "404": {"description": "Not found"}
+        }
+      },
+      "delete": {
+        "summary": "Delete candidate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "integer"}
+          }
+        ],
+        "responses": {
+          "200": {"description": "Deleted"},
+          "404": {"description": "Not found"}
+        }
+      }
+    },
+    "/comments": {
+      "get": {"summary": "List comments", "responses": {"200": {"description": "OK"}}},
+      "post": {"summary": "Create comment", "responses": {"201": {"description": "Created"}}}
+    },
+    "/comments/{id}": {
+      "get": {"summary": "Get comment", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "OK"}, "404": {"description": "Not found"}}},
+      "put": {"summary": "Update comment", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Updated"}, "404": {"description": "Not found"}}},
+      "delete": {"summary": "Delete comment", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Deleted"}, "404": {"description": "Not found"}}}
+    },
+    "/evaluations": {
+      "get": {"summary": "List evaluations", "responses": {"200": {"description": "OK"}}},
+      "post": {"summary": "Create evaluation", "responses": {"201": {"description": "Created"}}}
+    },
+    "/evaluations/{id}": {
+      "get": {"summary": "Get evaluation", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "OK"}, "404": {"description": "Not found"}}},
+      "put": {"summary": "Update evaluation", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Updated"}, "404": {"description": "Not found"}}},
+      "delete": {"summary": "Delete evaluation", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Deleted"}, "404": {"description": "Not found"}}}
+    },
+    "/activities": {
+      "get": {"summary": "List activities", "responses": {"200": {"description": "OK"}}},
+      "post": {"summary": "Create activity", "responses": {"201": {"description": "Created"}}}
+    },
+    "/activities/{id}": {
+      "get": {"summary": "Get activity", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "OK"}, "404": {"description": "Not found"}}},
+      "put": {"summary": "Update activity", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Updated"}, "404": {"description": "Not found"}}},
+      "delete": {"summary": "Delete activity", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Deleted"}, "404": {"description": "Not found"}}}
+    }
+  },
+  "components": {
+    "schemas": {
+      "Candidate": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "name": {"type": "string"},
+          "email": {"type": "string"}
+        }
+      },
+      "Comment": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "candidate_id": {"type": "integer"},
+          "content": {"type": "string"}
+        }
+      },
+      "Evaluation": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "candidate_id": {"type": "integer"},
+          "score": {"type": "integer"},
+          "notes": {"type": "string"}
+        }
+      },
+      "Activity": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "candidate_id": {"type": "integer"},
+          "description": {"type": "string"},
+          "activity_date": {"type": "string"}
+        }
+      }
+    }
+  }
+}
