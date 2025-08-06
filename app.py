@@ -1,10 +1,22 @@
 import json
 import re
+import os
+import uuid
+import cgi
+import mimetypes
+import shutil
+import subprocess
+from datetime import datetime
 from http.server import BaseHTTPRequestHandler, HTTPServer
-from urllib.parse import parse_qs, urlparse
 
 import db
 import services
+
+
+UPLOAD_DIR = os.getenv("UPLOAD_DIR", "uploads")
+API_TOKEN = os.getenv("API_TOKEN", "secret-token")
+MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
+ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx", ".txt"}
 
 
 def parse_body(handler):
@@ -23,6 +35,21 @@ def send_json(handler, data, status=200):
     handler.send_header('Content-Type', 'application/json')
     handler.end_headers()
     handler.wfile.write(json.dumps(data).encode())
+
+
+def ensure_upload_dir():
+    os.makedirs(UPLOAD_DIR, exist_ok=True)
+    os.chmod(UPLOAD_DIR, 0o700)
+
+
+def is_authorized(handler):
+    auth = handler.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        token = auth.split(" ", 1)[1]
+        if token == API_TOKEN:
+            return True
+    send_json(handler, {"error": "Unauthorized"}, 401)
+    return False
 
 
 class RequestHandler(BaseHTTPRequestHandler):
@@ -88,9 +115,92 @@ class RequestHandler(BaseHTTPRequestHandler):
                 send_json(self, {'error': 'Not found'}, 404)
             return
 
-        send_json(self, {'error': 'Unsupported endpoint'}, 404)
+        if self.path == '/files':
+            if not is_authorized(self):
+                return
+            send_json(self, services.get_files())
+            return
+        m = re.fullmatch(r'/files/(\d+)', self.path)
+        if m:
+            if not is_authorized(self):
+                return
+            fid = int(m.group(1))
+            f = services.get_file(fid)
+            if not f:
+                send_json(self, {'error': 'Not found'}, 404)
+                return
+            path = f['path']
+            abs_path = os.path.abspath(path)
+            if not abs_path.startswith(os.path.abspath(UPLOAD_DIR)):
+                send_json(self, {'error': 'Invalid path'}, 400)
+                return
+            try:
+                with open(abs_path, 'rb') as fp:
+                    data = fp.read()
+            except FileNotFoundError:
+                send_json(self, {'error': 'Not found'}, 404)
+                return
+            self.send_response(200)
+            mime = mimetypes.guess_type(f['filename'])[0] or 'application/octet-stream'
+            self.send_header('Content-Type', mime)
+            self.send_header('Content-Length', str(len(data)))
+            self.send_header('Content-Disposition', f'attachment; filename="{f["filename"]}"')
+            self.end_headers()
+            self.wfile.write(data)
+            return
 
     def do_POST(self):
+        if self.path == '/files':
+            if not is_authorized(self):
+                return
+            ctype = self.headers.get('Content-Type', '')
+            if not ctype.startswith('multipart/form-data'):
+                send_json(self, {'error': 'Content-Type must be multipart/form-data'}, 400)
+                return
+            form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,
+                                    environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': ctype})
+            if 'file' not in form or not form['file'].filename:
+                send_json(self, {'error': 'file field required'}, 400)
+                return
+            candidate_id = form.getvalue('candidate_id')
+            if not candidate_id:
+                send_json(self, {'error': 'candidate_id required'}, 400)
+                return
+            try:
+                candidate_id = int(candidate_id)
+            except ValueError:
+                send_json(self, {'error': 'invalid candidate_id'}, 400)
+                return
+            file_item = form['file']
+            filename = os.path.basename(file_item.filename)
+            ext = os.path.splitext(filename)[1].lower()
+            if ext not in ALLOWED_EXTENSIONS:
+                send_json(self, {'error': 'Invalid file extension'}, 400)
+                return
+            file_data = file_item.file.read()
+            if len(file_data) > MAX_FILE_SIZE:
+                send_json(self, {'error': 'File too large'}, 400)
+                return
+            unique_name = f"{uuid.uuid4().hex}{ext}"
+            dest_path = os.path.join(UPLOAD_DIR, unique_name)
+            with open(dest_path, 'wb') as f:
+                f.write(file_data)
+            scanner = shutil.which('clamscan')
+            if scanner:
+                result = subprocess.run([scanner, dest_path], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                if result.returncode != 0:
+                    os.remove(dest_path)
+                    send_json(self, {'error': 'Malware detected'}, 400)
+                    return
+            fid = services.create_file({
+                'candidate_id': candidate_id,
+                'filename': filename,
+                'path': dest_path,
+                'uploaded_at': datetime.utcnow().isoformat()
+            })
+            send_json(self, {'id': fid}, 201)
+            return
+
         data = parse_body(self)
         if self.path == '/candidates':
             cid = services.create_candidate(data)
@@ -192,6 +302,7 @@ class RequestHandler(BaseHTTPRequestHandler):
 
 def run():
     db.init_db()
+    ensure_upload_dir()
     server = HTTPServer(('0.0.0.0', 8000), RequestHandler)
     print('Serving on port 8000')
     server.serve_forever()
