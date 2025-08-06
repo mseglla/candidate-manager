@@ -1,0 +1,25 @@
+{
+  "name": "candidate-manager",
+  "version": "1.0.0",
+  "description": "candidate manager",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "better-sqlite3": "^9.4.3",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "speakeasy": "^2.0.0"
+  },
+  "devDependencies": {
+    "supertest": "^6.3.3"
+  }
+}
