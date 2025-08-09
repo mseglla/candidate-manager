@@ -20,7 +20,15 @@ El servidor se ejecutará en `http://localhost:8000`.
 - `PUT /candidates/{id}` – actualizar candidato
 - `DELETE /candidates/{id}` – eliminar candidato
 
-Recursos análogos existen para `comments`, `evaluations` y `activities`. Además se han añadido tablas `users` y `files` disponibles mediante los servicios internos.
+Endpoints equivalentes existen para `comments`, `evaluations`, `activities` y `users`.
+
+- `GET /users` – lista de usuarios
+- `POST /users` – crear usuario
+- `GET /users/{id}` – obtener usuario
+- `PUT /users/{id}` – actualizar usuario
+- `DELETE /users/{id}` – eliminar usuario
+
+Los endpoints de `files` siguen disponibles y requieren autenticación.
 
 ### Documentación
 La documentación OpenAPI está disponible en [`/swagger.json`](http://localhost:8000/swagger.json).
