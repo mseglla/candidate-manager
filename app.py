@@ -115,6 +115,19 @@ class RequestHandler(BaseHTTPRequestHandler):
                 send_json(self, {'error': 'Not found'}, 404)
             return
 
+        if self.path == '/users':
+            send_json(self, services.get_users())
+            return
+        m = re.fullmatch(r'/users/(\d+)', self.path)
+        if m:
+            uid = int(m.group(1))
+            user = services.get_user(uid)
+            if user:
+                send_json(self, user)
+            else:
+                send_json(self, {'error': 'Not found'}, 404)
+            return
+
         if self.path == '/files':
             if not is_authorized(self):
                 return
@@ -218,6 +231,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             aid = services.create_activity(data)
             send_json(self, {'id': aid}, 201)
             return
+        if self.path == '/users':
+            uid = services.create_user(data)
+            send_json(self, {'id': uid}, 201)
+            return
         send_json(self, {'error': 'Unsupported endpoint'}, 404)
 
     def do_PUT(self):
@@ -258,6 +275,15 @@ class RequestHandler(BaseHTTPRequestHandler):
             else:
                 send_json(self, {'error': 'Not found'}, 404)
             return
+        m = re.fullmatch(r'/users/(\d+)', self.path)
+        if m:
+            uid = int(m.group(1))
+            ok = services.update_user(uid, data)
+            if ok:
+                send_json(self, {'status': 'updated'})
+            else:
+                send_json(self, {'error': 'Not found'}, 404)
+            return
         send_json(self, {'error': 'Unsupported endpoint'}, 404)
 
     def do_DELETE(self):
@@ -292,6 +318,15 @@ class RequestHandler(BaseHTTPRequestHandler):
         if m:
             aid = int(m.group(1))
             ok = services.delete_activity(aid)
+            if ok:
+                send_json(self, {'status': 'deleted'})
+            else:
+                send_json(self, {'error': 'Not found'}, 404)
+            return
+        m = re.fullmatch(r'/users/(\d+)', self.path)
+        if m:
+            uid = int(m.group(1))
+            ok = services.delete_user(uid)
             if ok:
                 send_json(self, {'status': 'deleted'})
             else:
