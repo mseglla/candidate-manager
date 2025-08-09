@@ -2,6 +2,8 @@
 
 Minimal API para gestionar candidatos, comentarios, usuarios, archivos, evaluaciones y un historial de actividad usando el servidor HTTP incorporado de Python y SQLite.
 
+El backend se implementa exclusivamente en Python; no se requiere Node.js.
+
 ## Uso
 
 Antes de iniciar el servidor es necesario aplicar las migraciones de base de datos.
