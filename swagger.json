@@ -93,6 +93,15 @@
       "put": {"summary": "Update activity", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Updated"}, "404": {"description": "Not found"}}},
       "delete": {"summary": "Delete activity", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Deleted"}, "404": {"description": "Not found"}}}
     },
+    "/users": {
+      "get": {"summary": "List users", "responses": {"200": {"description": "OK"}}},
+      "post": {"summary": "Create user", "responses": {"201": {"description": "Created"}}}
+    },
+    "/users/{id}": {
+      "get": {"summary": "Get user", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "OK"}, "404": {"description": "Not found"}}},
+      "put": {"summary": "Update user", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Updated"}, "404": {"description": "Not found"}}},
+      "delete": {"summary": "Delete user", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Deleted"}, "404": {"description": "Not found"}}}
+    },
     "/files": {
       "get": {"summary": "List files", "responses": {"200": {"description": "OK"}}},
       "post": {
@@ -168,6 +177,14 @@
           "filename": {"type": "string"},
           "path": {"type": "string"},
           "uploaded_at": {"type": "string"}
+        }
+      },
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "integer"},
+          "username": {"type": "string"},
+          "email": {"type": "string"}
         }
       }
     }

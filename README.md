@@ -20,7 +20,15 @@ El servidor se ejecutará en `http://localhost:8000`.
 - `PUT /candidates/{id}` – actualizar candidato
 - `DELETE /candidates/{id}` – eliminar candidato
 
-Recursos análogos existen para `comments`, `evaluations` y `activities`. Además se han añadido tablas `users` y `files` disponibles mediante los servicios internos.
+Endpoints equivalentes existen para `comments`, `evaluations`, `activities` y `users`.
+
+- `GET /users` – lista de usuarios
+- `POST /users` – crear usuario
+- `GET /users/{id}` – obtener usuario
+- `PUT /users/{id}` – actualizar usuario
+- `DELETE /users/{id}` – eliminar usuario
+
+Los endpoints de `files` siguen disponibles y requieren autenticación.
 
 ### Documentación
 La documentación OpenAPI está disponible en [`/swagger.json`](http://localhost:8000/swagger.json).
@@ -46,3 +54,16 @@ El proyecto incluye un servicio de subida y descarga de archivos con las siguien
 2. Envíe una petición `POST /files` con autenticación y un archivo multipart para subirlo. Use `GET /files/{id}` para descargarlo.
 
 Los archivos se guardan dentro de `uploads` con permisos restringidos.
+
+## Frontend ligero
+
+En el directorio `frontend/` se incluye una interfaz web sencilla para gestionar usuarios.
+Los archivos son estáticos (`index.html`, `app.js` y `style.css`) y consumen la API directamente.
+
+Para probarla, sirve el directorio con cualquier servidor estático, por ejemplo:
+
+```bash
+python -m http.server --directory frontend 3000
+```
+
+Con la API ejecutándose en `http://localhost:8000`, abre `http://localhost:3000` en el navegador.
