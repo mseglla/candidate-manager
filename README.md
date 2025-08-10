@@ -56,3 +56,16 @@ El proyecto incluye un servicio de subida y descarga de archivos con las siguien
 2. Envíe una petición `POST /files` con autenticación y un archivo multipart para subirlo. Use `GET /files/{id}` para descargarlo.
 
 Los archivos se guardan dentro de `uploads` con permisos restringidos.
+
+## Frontend ligero
+
+En el directorio `frontend/` se incluye una interfaz web sencilla para gestionar usuarios.
+Los archivos son estáticos (`index.html`, `app.js` y `style.css`) y consumen la API directamente.
+
+Para probarla, sirve el directorio con cualquier servidor estático, por ejemplo:
+
+```bash
+python -m http.server --directory frontend 3000
+```
+
+Con la API ejecutándose en `http://localhost:8000`, abre `http://localhost:3000` en el navegador.
