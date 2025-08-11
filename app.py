@@ -4,7 +4,7 @@ import os
 import uuid
 from email.parser import BytesParser
 from email.policy import default
-from urllib.parse import parse_qs, quote_plus
+from urllib.parse import parse_qs
 import mimetypes
 import shutil
 import subprocess
@@ -188,7 +188,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             msg = BytesParser(policy=default).parsebytes(
                 f'Content-Type: {ctype}\r\n\r\n'.encode() + body
             )
-            field_parts = []
+            fields = {}
             file_data = None
             filename = None
             for part in msg.iter_parts():
@@ -204,8 +204,7 @@ class RequestHandler(BaseHTTPRequestHandler):
                     file_data = part.get_payload(decode=True)
                 else:
                     value = part.get_payload(decode=True).decode()
-                    field_parts.append(f"{name}={quote_plus(value)}")
-            fields = {k: v[0] for k, v in parse_qs('&'.join(field_parts)).items()}
+                    fields.update({k: v[0] for k, v in parse_qs(f'{name}={value}').items()})
             if not file_data or not filename:
                 send_json(self, {'error': 'file field required'}, 400)
                 return
