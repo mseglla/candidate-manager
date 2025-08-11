@@ -20,6 +20,8 @@ API_TOKEN = os.getenv("API_TOKEN", "secret-token")
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 ALLOWED_EXTENSIONS = {".pdf", ".doc", ".docx", ".txt"}
 
+SESSIONS = {}
+
 
 def parse_body(handler):
     length = int(handler.headers.get('Content-Length', 0))
@@ -49,6 +51,16 @@ def is_authorized(handler):
     if auth.startswith("Bearer "):
         token = auth.split(" ", 1)[1]
         if token == API_TOKEN:
+            return True
+    send_json(handler, {"error": "Unauthorized"}, 401)
+    return False
+
+
+def is_logged_in(handler):
+    auth = handler.headers.get("Authorization", "")
+    if auth.startswith("Bearer "):
+        token = auth.split(" ", 1)[1]
+        if token in SESSIONS:
             return True
     send_json(handler, {"error": "Unauthorized"}, 401)
     return False
@@ -118,10 +130,14 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
 
         if self.path == '/users':
+            if not is_logged_in(self):
+                return
             send_json(self, services.get_users())
             return
         m = re.fullmatch(r'/users/(\d+)', self.path)
         if m:
+            if not is_logged_in(self):
+                return
             uid = int(m.group(1))
             user = services.get_user(uid)
             if user:
@@ -265,6 +281,17 @@ class RequestHandler(BaseHTTPRequestHandler):
             uid = services.create_user(data)
             send_json(self, {'id': uid}, 201)
             return
+        if self.path == '/login':
+            username = data.get('username')
+            password = data.get('password')
+            uid = services.authenticate_user(username, password)
+            if uid:
+                token = str(uuid.uuid4())
+                SESSIONS[token] = uid
+                send_json(self, {'token': token})
+            else:
+                send_json(self, {'error': 'Unauthorized'}, 401)
+            return
         send_json(self, {'error': 'Unsupported endpoint'}, 404)
 
     def do_PUT(self):
@@ -307,6 +334,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
         m = re.fullmatch(r'/users/(\d+)', self.path)
         if m:
+            if not is_logged_in(self):
+                return
             uid = int(m.group(1))
             ok = services.update_user(uid, data)
             if ok:
@@ -355,6 +384,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
         m = re.fullmatch(r'/users/(\d+)', self.path)
         if m:
+            if not is_logged_in(self):
+                return
             uid = int(m.group(1))
             ok = services.delete_user(uid)
             if ok:

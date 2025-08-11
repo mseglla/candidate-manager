@@ -14,7 +14,7 @@
       <table id="users-table">
         <thead>
           <tr>
-            <th scope="col">Name</th>
+            <th scope="col">Username</th>
             <th scope="col">Email</th>
             <th scope="col">Actions</th>
           </tr>
@@ -26,12 +26,16 @@
       <h2 id="add-user-heading">Add User</h2>
       <form id="user-form">
         <label>
-          Name
-          <input type="text" name="name" required />
+          Username
+          <input type="text" name="username" required />
         </label>
         <label>
           Email
           <input type="email" name="email" required />
+        </label>
+        <label>
+          Password
+          <input type="password" name="password" required />
         </label>
         <button type="submit">Add</button>
       </form>

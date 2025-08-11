@@ -102,6 +102,9 @@
       "put": {"summary": "Update user", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Updated"}, "404": {"description": "Not found"}}},
       "delete": {"summary": "Delete user", "parameters": [{"name": "id", "in": "path", "required": true, "schema": {"type": "integer"}}], "responses": {"200": {"description": "Deleted"}, "404": {"description": "Not found"}}}
     },
+    "/login": {
+      "post": {"summary": "Authenticate user", "responses": {"200": {"description": "Token"}, "401": {"description": "Unauthorized"}}}
+    },
     "/files": {
       "get": {"summary": "List files", "responses": {"200": {"description": "OK"}}},
       "post": {
