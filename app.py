@@ -2,7 +2,9 @@ import json
 import re
 import os
 import uuid
-import cgi
+from email.parser import BytesParser
+from email.policy import default
+from urllib.parse import parse_qs, quote_plus
 import mimetypes
 import shutil
 import subprocess
@@ -170,12 +172,44 @@ class RequestHandler(BaseHTTPRequestHandler):
             if not ctype.startswith('multipart/form-data'):
                 send_json(self, {'error': 'Content-Type must be multipart/form-data'}, 400)
                 return
-            form = cgi.FieldStorage(fp=self.rfile, headers=self.headers,
-                                    environ={'REQUEST_METHOD': 'POST', 'CONTENT_TYPE': ctype})
-            if 'file' not in form or not form['file'].filename:
+            length = int(self.headers.get('Content-Length', 0))
+            body = self.rfile.read(length)
+            boundary = None
+            for param in ctype.split(';'):
+                param = param.strip()
+                if param.startswith('boundary='):
+                    boundary = param.split('=', 1)[1]
+                    if boundary.startswith('"') and boundary.endswith('"'):
+                        boundary = boundary[1:-1]
+                    break
+            if not boundary:
+                send_json(self, {'error': 'No boundary found'}, 400)
+                return
+            msg = BytesParser(policy=default).parsebytes(
+                f'Content-Type: {ctype}\r\n\r\n'.encode() + body
+            )
+            field_parts = []
+            file_data = None
+            filename = None
+            for part in msg.iter_parts():
+                cd = part.get('Content-Disposition', '')
+                if not cd.startswith('form-data'):
+                    continue
+                params = dict(part.get_params(header='content-disposition'))
+                name = params.get('name')
+                if not name:
+                    continue
+                if params.get('filename'):
+                    filename = os.path.basename(params['filename'])
+                    file_data = part.get_payload(decode=True)
+                else:
+                    value = part.get_payload(decode=True).decode()
+                    field_parts.append(f"{name}={quote_plus(value)}")
+            fields = {k: v[0] for k, v in parse_qs('&'.join(field_parts)).items()}
+            if not file_data or not filename:
                 send_json(self, {'error': 'file field required'}, 400)
                 return
-            candidate_id = form.getvalue('candidate_id')
+            candidate_id = fields.get('candidate_id')
             if not candidate_id:
                 send_json(self, {'error': 'candidate_id required'}, 400)
                 return
@@ -184,13 +218,10 @@ class RequestHandler(BaseHTTPRequestHandler):
             except ValueError:
                 send_json(self, {'error': 'invalid candidate_id'}, 400)
                 return
-            file_item = form['file']
-            filename = os.path.basename(file_item.filename)
             ext = os.path.splitext(filename)[1].lower()
             if ext not in ALLOWED_EXTENSIONS:
                 send_json(self, {'error': 'Invalid file extension'}, 400)
                 return
-            file_data = file_item.file.read()
             if len(file_data) > MAX_FILE_SIZE:
                 send_json(self, {'error': 'File too large'}, 400)
                 return
