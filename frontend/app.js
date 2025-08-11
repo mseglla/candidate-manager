@@ -1,7 +1,13 @@
 const API_BASE = '';
+const token = localStorage.getItem('token');
+if (!token) {
+  window.location.href = 'login.html';
+}
 
 async function fetchUsers() {
-  const res = await fetch(`${API_BASE}/users`);
+  const res = await fetch(`${API_BASE}/users`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
   if (!res.ok) throw new Error('Failed to load users');
   return res.json();
 }
@@ -11,7 +17,7 @@ function renderUsers(users) {
   tbody.innerHTML = '';
   users.forEach(u => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${u.name}</td><td>${u.email}</td><td><button data-id="${u.id}" class="delete">Delete</button></td>`;
+    tr.innerHTML = `<td>${u.username}</td><td>${u.email}</td><td><button data-id="${u.id}" class="delete">Delete</button></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -28,7 +34,10 @@ async function loadUsers() {
 async function addUser(data) {
   const res = await fetch(`${API_BASE}/users`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
     body: JSON.stringify(data)
   });
   if (!res.ok) throw new Error('Failed to add user');
@@ -36,7 +45,10 @@ async function addUser(data) {
 }
 
 async function deleteUser(id) {
-  const res = await fetch(`${API_BASE}/users/${id}`, { method: 'DELETE' });
+  const res = await fetch(`${API_BASE}/users/${id}`, {
+    method: 'DELETE',
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
   if (!res.ok) throw new Error('Failed to delete user');
 }
 
@@ -47,10 +59,11 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     const form = e.target;
     const data = {
-      name: form.name.value.trim(),
-      email: form.email.value.trim()
+      username: form.username.value.trim(),
+      email: form.email.value.trim(),
+      password: form.password.value
     };
-    if (!data.name || !data.email) return;
+    if (!data.username || !data.email || !data.password) return;
     try {
       await addUser(data);
       form.reset();

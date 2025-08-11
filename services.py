@@ -1,4 +1,9 @@
 from db import get_connection
+import hashlib
+
+
+def hash_password(password):
+    return hashlib.sha256(password.encode()).hexdigest()
 
 # Candidate Services
 
@@ -216,8 +221,12 @@ def create_user(data):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO users(username, email) VALUES (?, ?)",
-        (data.get("username"), data.get("email")),
+        "INSERT INTO users(username, email, password) VALUES (?, ?, ?)",
+        (
+            data.get("username"),
+            data.get("email"),
+            hash_password(data.get("password", "")),
+        ),
     )
     conn.commit()
     uid = cur.lastrowid
@@ -228,7 +237,7 @@ def create_user(data):
 def get_users():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users")
+    cur.execute("SELECT id, username, email FROM users")
     rows = [dict(row) for row in cur.fetchall()]
     conn.close()
     return rows
@@ -237,7 +246,7 @@ def get_users():
 def get_user(uid):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT * FROM users WHERE id = ?", (uid,))
+    cur.execute("SELECT id, username, email FROM users WHERE id = ?", (uid,))
     row = cur.fetchone()
     conn.close()
     return dict(row) if row else None
@@ -246,10 +255,21 @@ def get_user(uid):
 def update_user(uid, data):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute(
-        "UPDATE users SET username = ?, email = ? WHERE id = ?",
-        (data.get("username"), data.get("email"), uid),
-    )
+    if data.get("password"):
+        cur.execute(
+            "UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?",
+            (
+                data.get("username"),
+                data.get("email"),
+                hash_password(data.get("password")),
+                uid,
+            ),
+        )
+    else:
+        cur.execute(
+            "UPDATE users SET username = ?, email = ? WHERE id = ?",
+            (data.get("username"), data.get("email"), uid),
+        )
     conn.commit()
     updated = cur.rowcount
     conn.close()
@@ -264,6 +284,17 @@ def delete_user(uid):
     deleted = cur.rowcount
     conn.close()
     return deleted > 0
+
+
+def authenticate_user(username, password):
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, password FROM users WHERE username = ?", (username,))
+    row = cur.fetchone()
+    conn.close()
+    if row and row["password"] == hash_password(password):
+        return row["id"]
+    return None
 
 
 # File Services
