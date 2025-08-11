@@ -1,4 +1,4 @@
-const API_BASE = '';
+const API_BASE = 'http://localhost:8000';
 
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('login-form');
