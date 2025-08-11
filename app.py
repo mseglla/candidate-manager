@@ -34,9 +34,16 @@ def parse_body(handler):
     return {}
 
 
+def add_cors_headers(handler):
+    handler.send_header('Access-Control-Allow-Origin', '*')
+    handler.send_header('Access-Control-Allow-Headers', 'Content-Type, Authorization')
+    handler.send_header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+
+
 def send_json(handler, data, status=200):
     handler.send_response(status)
     handler.send_header('Content-Type', 'application/json')
+    add_cors_headers(handler)
     handler.end_headers()
     handler.wfile.write(json.dumps(data).encode())
 
@@ -67,6 +74,11 @@ def is_logged_in(handler):
 
 
 class RequestHandler(BaseHTTPRequestHandler):
+    def do_OPTIONS(self):
+        self.send_response(204)
+        add_cors_headers(self)
+        self.end_headers()
+
     def do_GET(self):
         if self.path == '/swagger.json':
             try:
@@ -176,6 +188,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             self.send_header('Content-Type', mime)
             self.send_header('Content-Length', str(len(data)))
             self.send_header('Content-Disposition', f'attachment; filename="{f["filename"]}"')
+            add_cors_headers(self)
             self.end_headers()
             self.wfile.write(data)
             return
