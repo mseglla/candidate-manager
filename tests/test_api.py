@@ -107,3 +107,41 @@ def test_user_crud(server):
 
     status, _ = _request(port, 'GET', f'/users/{uid}')
     assert status == 404
+
+
+def test_file_upload(server):
+    port = server
+    status, data = _request(port, 'POST', '/candidates', {'name': 'Carol', 'email': 'carol@example.com'})
+    assert status == 201
+    cid = data['id']
+
+    boundary = 'BoundaryTest'
+    file_content = b'hello world'
+    body = (
+        f'--{boundary}\r\n'
+        'Content-Disposition: form-data; name="candidate_id"\r\n\r\n'
+        f'{cid}\r\n'
+        f'--{boundary}\r\n'
+        'Content-Disposition: form-data; name="file"; filename="test.txt"\r\n'
+        'Content-Type: text/plain\r\n\r\n'
+    ).encode() + file_content + b'\r\n' + f'--{boundary}--\r\n'.encode()
+
+    headers = {
+        'Content-Type': f'multipart/form-data; boundary={boundary}',
+        'Authorization': 'Bearer secret-token',
+    }
+    conn = http.client.HTTPConnection('localhost', port)
+    conn.request('POST', '/files', body=body, headers=headers)
+    resp = conn.getresponse()
+    payload = resp.read()
+    conn.close()
+    assert resp.status == 201, payload
+    data = json.loads(payload.decode())
+    fid = data['id']
+
+    conn = http.client.HTTPConnection('localhost', port)
+    conn.request('GET', '/files', headers={'Authorization': 'Bearer secret-token'})
+    resp = conn.getresponse()
+    listing = json.loads(resp.read())
+    conn.close()
+    assert any(f['id'] == fid for f in listing)
