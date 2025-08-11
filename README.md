@@ -43,6 +43,7 @@ El proyecto incluye un servicio de subida y descarga de archivos con las siguien
 - Las rutas `/files` y `/files/{id}` requieren autenticación mediante un token Bearer definido por la variable de entorno `API_TOKEN` (valor por defecto `secret-token`).
 - Se valida el tamaño máximo (5 MB) y la extensión permitida del archivo.
 - Si está disponible `clamscan`, se analiza el archivo en busca de malware antes de aceptarlo.
+- El servidor procesa formularios `multipart/form-data` sin depender de `cgi`, utilizando `email.parser` y `urllib.parse`.
 
 ### Uso
 
