@@ -15,6 +15,10 @@ python app.py
 
 El servidor se ejecutará en `http://localhost:8000`.
 
+La base de datos incluye por defecto un usuario administrador con credenciales
+`admin`/`admin`. Este usuario tiene permisos para gestionar otros usuarios y
+asignarles roles.
+
 ### Endpoints principales
 - `GET /candidates` – lista de candidatos
 - `POST /candidates` – crear candidato

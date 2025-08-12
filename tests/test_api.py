@@ -87,9 +87,15 @@ def test_candidate_crud(server):
 
 def test_user_crud(server):
     port = server
-    status, data = _request(port, 'POST', '/users', {
-        'username': 'bob', 'email': 'bob@example.com', 'password': 'pw'
+    status, data = _request(port, 'POST', '/login', {
+        'username': 'admin', 'password': 'admin'
     })
+    assert status == 200
+    admin_token = data['token']
+
+    status, data = _request(port, 'POST', '/users', {
+        'username': 'bob', 'email': 'bob@example.com', 'password': 'pw', 'role': 'user'
+    }, token=admin_token)
     assert status == 201
     uid = data['id']
 
@@ -97,27 +103,26 @@ def test_user_crud(server):
         'username': 'bob', 'password': 'pw'
     })
     assert status == 200
-    token = data['token']
 
-    status, data = _request(port, 'GET', '/users', token=token)
+    status, data = _request(port, 'GET', '/users', token=admin_token)
     assert status == 200
     assert any(u['id'] == uid for u in data)
 
-    status, data = _request(port, 'GET', f'/users/{uid}', token=token)
+    status, data = _request(port, 'GET', f'/users/{uid}', token=admin_token)
     assert status == 200
     assert data['username'] == 'bob'
 
     status, data = _request(port, 'PUT', f'/users/{uid}', {
-        'username': 'bobby', 'email': 'bob@example.com'
-    }, token=token)
+        'username': 'bobby', 'email': 'bob@example.com', 'role': 'user'
+    }, token=admin_token)
     assert status == 200
     assert data['status'] == 'updated'
 
-    status, data = _request(port, 'DELETE', f'/users/{uid}', token=token)
+    status, data = _request(port, 'DELETE', f'/users/{uid}', token=admin_token)
     assert status == 200
     assert data['status'] == 'deleted'
 
-    status, _ = _request(port, 'GET', f'/users/{uid}', token=token)
+    status, _ = _request(port, 'GET', f'/users/{uid}', token=admin_token)
     assert status == 404
 
 

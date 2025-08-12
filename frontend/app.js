@@ -17,7 +17,7 @@ function renderUsers(users) {
   tbody.innerHTML = '';
   users.forEach(u => {
     const tr = document.createElement('tr');
-    tr.innerHTML = `<td>${u.username}</td><td>${u.email}</td><td><button data-id="${u.id}" class="delete">Delete</button></td>`;
+    tr.innerHTML = `<td>${u.username}</td><td>${u.email}</td><td>${u.role}</td><td><button data-id="${u.id}" class="delete">Delete</button></td>`;
     tbody.appendChild(tr);
   });
 }
@@ -61,7 +61,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = {
       username: form.username.value.trim(),
       email: form.email.value.trim(),
-      password: form.password.value
+      password: form.password.value,
+      role: form.role.value
     };
     if (!data.username || !data.email || !data.password) return;
     try {

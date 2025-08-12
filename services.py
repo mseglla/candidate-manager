@@ -221,11 +221,12 @@ def create_user(data):
     conn = get_connection()
     cur = conn.cursor()
     cur.execute(
-        "INSERT INTO users(username, email, password) VALUES (?, ?, ?)",
+        "INSERT INTO users(username, email, password, role) VALUES (?, ?, ?, ?)",
         (
             data.get("username"),
             data.get("email"),
             hash_password(data.get("password", "")),
+            data.get("role", "user"),
         ),
     )
     conn.commit()
@@ -237,7 +238,7 @@ def create_user(data):
 def get_users():
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, username, email FROM users")
+    cur.execute("SELECT id, username, email, role FROM users")
     rows = [dict(row) for row in cur.fetchall()]
     conn.close()
     return rows
@@ -246,7 +247,10 @@ def get_users():
 def get_user(uid):
     conn = get_connection()
     cur = conn.cursor()
-    cur.execute("SELECT id, username, email FROM users WHERE id = ?", (uid,))
+    cur.execute(
+        "SELECT id, username, email, role FROM users WHERE id = ?",
+        (uid,),
+    )
     row = cur.fetchone()
     conn.close()
     return dict(row) if row else None
@@ -257,18 +261,19 @@ def update_user(uid, data):
     cur = conn.cursor()
     if data.get("password"):
         cur.execute(
-            "UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?",
+            "UPDATE users SET username = ?, email = ?, password = ?, role = ? WHERE id = ?",
             (
                 data.get("username"),
                 data.get("email"),
                 hash_password(data.get("password")),
+                data.get("role", "user"),
                 uid,
             ),
         )
     else:
         cur.execute(
-            "UPDATE users SET username = ?, email = ? WHERE id = ?",
-            (data.get("username"), data.get("email"), uid),
+            "UPDATE users SET username = ?, email = ?, role = ? WHERE id = ?",
+            (data.get("username"), data.get("email"), data.get("role", "user"), uid),
         )
     conn.commit()
     updated = cur.rowcount

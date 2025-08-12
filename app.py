@@ -63,13 +63,28 @@ def is_authorized(handler):
     return False
 
 
-def is_logged_in(handler):
+def get_current_user(handler):
     auth = handler.headers.get("Authorization", "")
     if auth.startswith("Bearer "):
         token = auth.split(" ", 1)[1]
-        if token in SESSIONS:
-            return True
+        uid = SESSIONS.get(token)
+        if uid:
+            return services.get_user(uid)
+    return None
+
+
+def is_logged_in(handler):
+    if get_current_user(handler):
+        return True
     send_json(handler, {"error": "Unauthorized"}, 401)
+    return False
+
+
+def is_admin(handler):
+    user = get_current_user(handler)
+    if user and user.get("role") == "admin":
+        return True
+    send_json(handler, {"error": "Forbidden"}, 403)
     return False
 
 
@@ -142,13 +157,13 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
 
         if self.path == '/users':
-            if not is_logged_in(self):
+            if not is_admin(self):
                 return
             send_json(self, services.get_users())
             return
         m = re.fullmatch(r'/users/(\d+)', self.path)
         if m:
-            if not is_logged_in(self):
+            if not is_admin(self):
                 return
             uid = int(m.group(1))
             user = services.get_user(uid)
@@ -291,6 +306,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             send_json(self, {'id': aid}, 201)
             return
         if self.path == '/users':
+            if not is_admin(self):
+                return
             uid = services.create_user(data)
             send_json(self, {'id': uid}, 201)
             return
@@ -347,7 +364,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
         m = re.fullmatch(r'/users/(\d+)', self.path)
         if m:
-            if not is_logged_in(self):
+            if not is_admin(self):
                 return
             uid = int(m.group(1))
             ok = services.update_user(uid, data)
@@ -397,7 +414,7 @@ class RequestHandler(BaseHTTPRequestHandler):
             return
         m = re.fullmatch(r'/users/(\d+)', self.path)
         if m:
-            if not is_logged_in(self):
+            if not is_admin(self):
                 return
             uid = int(m.group(1))
             ok = services.delete_user(uid)
