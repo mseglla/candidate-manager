@@ -187,7 +187,8 @@
         "properties": {
           "id": {"type": "integer"},
           "username": {"type": "string"},
-          "email": {"type": "string"}
+          "email": {"type": "string"},
+          "role": {"type": "string"}
         }
       }
     }
